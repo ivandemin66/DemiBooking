@@ -1,0 +1,80 @@
+server:
+  port: 8080
+
+spring:
+  main:
+    web-application-type: reactive
+  application:
+    name: api-gateway
+  cloud:
+    gateway:
+      routes:
+        # Маршрут для сервиса отелей
+        - id: hotel-service
+          uri: lb://hotel-service
+          predicates:
+            - Path=/api/hotels/**
+          filters:
+            - StripPrefix=2
+            - name: AddRequestHeader
+              args:
+                name: Authorization
+                value: preserve
+        # Маршрут для сервиса бронирования
+        - id: booking-service
+          uri: lb://booking-service
+          predicates:
+            - Path=/api/bookings/**
+          filters:
+            - StripPrefix=2
+            - name: AddRequestHeader
+              args:
+                name: Authorization
+                value: preserve
+        # Маршрут для пользователей (регистрация и аутентификация)
+        - id: booking-service-auth
+          uri: lb://booking-service
+          predicates:
+            - Path=/user/**
+          filters:
+            - name: AddRequestHeader
+              args:
+                name: Authorization
+                value: preserve
+      # Глобальная конфигурация CORS
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowedOrigins: "*"
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+              - OPTIONS
+              - PATCH
+            allowedHeaders: "*"
+            allowCredentials: true
+    discovery:
+      enabled: false
+
+# Отключаем автоматическую регистрацию в Eureka для локального запуска (если Eureka не запущен)
+
+# Конфигурация Eureka Client (оставлена для продакшена, но выключена локально)
+eureka:
+  client:
+    enabled: false
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+  instance:
+    prefer-ip-address: true
+
+# Конфигурация Actuator
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: always
