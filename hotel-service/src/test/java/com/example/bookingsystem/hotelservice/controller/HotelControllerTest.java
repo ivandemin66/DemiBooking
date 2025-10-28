@@ -14,7 +14,6 @@ import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -43,22 +42,10 @@ class HotelControllerTest {
     @Autowired
     private ObjectMapper objectMapper;
 
-    private Hotel testHotel;
     private CreateHotelRequest createRequest;
 
     @BeforeEach
     void setUp() {
-        testHotel = Hotel.builder()
-                .id(1L)
-                .name("Тестовый Отель")
-                .address("Тестовая улица, 1")
-                .description("Описание тестового отеля")
-                .phoneNumber("+7 (495) 123-45-67")
-                .email("test@hotel.com")
-                .rating(4.5)
-                .createdAt(LocalDateTime.now())
-                .build();
-
         createRequest = CreateHotelRequest.builder()
                 .name("Тестовый Отель")
                 .address("Тестовая улица, 1")

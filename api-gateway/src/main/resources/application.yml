@@ -16,10 +16,6 @@ spring:
             - Path=/api/hotels/**
           filters:
             - StripPrefix=2
-            - name: AddRequestHeader
-              args:
-                name: Authorization
-                value: preserve
         # Маршрут для сервиса бронирования
         - id: booking-service
           uri: lb://booking-service
@@ -27,20 +23,12 @@ spring:
             - Path=/api/bookings/**
           filters:
             - StripPrefix=2
-            - name: AddRequestHeader
-              args:
-                name: Authorization
-                value: preserve
         # Маршрут для пользователей (регистрация и аутентификация)
         - id: booking-service-auth
           uri: lb://booking-service
           predicates:
             - Path=/user/**
-          filters:
-            - name: AddRequestHeader
-              args:
-                name: Authorization
-                value: preserve
+          
       # Глобальная конфигурация CORS
       globalcors:
         cors-configurations:
@@ -56,14 +44,12 @@ spring:
             allowedHeaders: "*"
             allowCredentials: true
     discovery:
-      enabled: false
+      enabled: true
 
-# Отключаем автоматическую регистрацию в Eureka для локального запуска (если Eureka не запущен)
-
-# Конфигурация Eureka Client (оставлена для продакшена, но выключена локально)
+# Конфигурация Eureka Client
 eureka:
   client:
-    enabled: false
+    enabled: true
     service-url:
       defaultZone: http://localhost:8761/eureka/
   instance:

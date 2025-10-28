@@ -20,7 +20,6 @@ public interface UserMapper {
     /**
      * Преобразование сущности пользователя в DTO
      */
-    @Mapping(target = "password", ignore = true) // Не включаем пароль в DTO
     UserDto toDto(User user);
 
     /**
