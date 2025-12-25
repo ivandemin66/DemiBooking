@@ -1,7 +1,6 @@
 package com.example.bookingsystem.hotelservice.controller;
 
 import com.example.bookingsystem.hotelservice.dto.CreateHotelRequest;
-import com.example.bookingsystem.hotelservice.entity.Hotel;
 import com.example.bookingsystem.hotelservice.repository.HotelRepository;
 import com.example.bookingsystem.hotelservice.service.HotelService;
 import com.fasterxml.jackson.databind.ObjectMapper;

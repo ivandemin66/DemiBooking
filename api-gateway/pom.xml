@@ -23,6 +23,12 @@
             <artifactId>spring-cloud-starter-gateway</artifactId>
         </dependency>
 
+        <!-- Явно подключаем WebFlux (реактивный стек) -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-webflux</artifactId>
+        </dependency>
+
         <!-- Eureka Client для регистрации в Eureka Server -->
         <dependency>
             <groupId>org.springframework.cloud</groupId>

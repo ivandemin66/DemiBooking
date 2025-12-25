@@ -20,9 +20,9 @@ spring:
         - id: booking-service
           uri: lb://booking-service
           predicates:
-            - Path=/api/bookings/**
+            - Path=/booking/**
           filters:
-            - StripPrefix=2
+            - RewritePath=/booking/(?<segment>.*), /booking/$\\{segment}
         # Маршрут для пользователей (регистрация и аутентификация)
         - id: booking-service-auth
           uri: lb://booking-service

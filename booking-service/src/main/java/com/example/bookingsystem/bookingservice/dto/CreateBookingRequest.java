@@ -16,7 +16,7 @@ import java.time.LocalDate;
 @AllArgsConstructor
 public class CreateBookingRequest {
 
-    @NotNull(message = "ID номера не может быть пустым")
+    // roomId необязателен при autoSelect=true, обязателен при autoSelect=false
     private Long roomId;
 
     @NotNull(message = "Дата начала не может быть пустой")

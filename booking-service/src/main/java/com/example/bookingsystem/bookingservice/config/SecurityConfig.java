@@ -39,6 +39,8 @@ public class SecurityConfig {
                 // Публичные эндпойнты
                 .requestMatchers("/user/register", "/user/auth").permitAll()
                 .requestMatchers("/actuator/health").permitAll()
+                // Swagger документация
+                .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/api-docs/**", "/v3/api-docs/**").permitAll()
                 // Эндпойнты для пользователей
                 .requestMatchers("/booking/**").hasAnyRole("USER", "ADMIN")
                 .requestMatchers("/user/**").hasRole("ADMIN")

@@ -152,16 +152,21 @@ public class RoomService {
         // Проверяем идемпотентность
         if (request.getRequestId() != null && temporaryBlocks.containsKey(request.getRequestId())) {
             log.info("Запрос {} уже обработан (идемпотентность)", request.getRequestId());
+            Room existingRoom = roomRepository.findById(request.getRoomId())
+                    .orElseThrow(() -> new IllegalArgumentException("Номер не найден"));
             return RoomAvailabilityResponse.builder()
                     .available(true)
                     .message("Номер уже заблокирован")
                     .requestId(request.getRequestId())
                     .roomId(request.getRoomId())
+                    .hotelId(existingRoom.getHotel().getId())
                     .build();
         }
         
         Room room = roomRepository.findById(request.getRoomId())
                 .orElseThrow(() -> new IllegalArgumentException("Номер с ID " + request.getRoomId() + " не найден"));
+        
+        Long hotelId = room.getHotel().getId();
         
         if (!room.getAvailable()) {
             log.warn("Номер {} недоступен", request.getRoomId());
@@ -170,6 +175,7 @@ public class RoomService {
                     .message("Номер недоступен")
                     .requestId(request.getRequestId())
                     .roomId(request.getRoomId())
+                    .hotelId(hotelId)
                     .build();
         }
         
@@ -181,6 +187,7 @@ public class RoomService {
                     .message("Номер занят на указанные даты")
                     .requestId(request.getRequestId())
                     .roomId(request.getRoomId())
+                    .hotelId(hotelId)
                     .build();
         }
         
@@ -197,6 +204,7 @@ public class RoomService {
                 .message("Номер доступен и заблокирован")
                 .requestId(request.getRequestId())
                 .roomId(request.getRoomId())
+                .hotelId(hotelId)
                 .build();
     }
 

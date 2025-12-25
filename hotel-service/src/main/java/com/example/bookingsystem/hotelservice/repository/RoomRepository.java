@@ -38,9 +38,9 @@ public interface RoomRepository extends JpaRepository<Room, Long> {
     List<Room> findRecommendedRoomsByHotelId(@Param("hotelId") Long hotelId);
 
     /**
-     * Получение всех доступных номеров (для общего списка)
+     * Получение всех доступных номеров (отсортированных по times_booked для алгоритма планирования)
      */
-    @Query("SELECT r FROM Room r WHERE r.available = true ORDER BY r.hotel.name ASC, r.roomNumber ASC")
+    @Query("SELECT r FROM Room r WHERE r.available = true ORDER BY r.timesBooked ASC, r.id ASC")
     List<Room> findAllAvailableRooms();
 
     /**

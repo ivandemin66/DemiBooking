@@ -24,6 +24,8 @@ public class SecurityConfig {
             .csrf(AbstractHttpConfigurer::disable)
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(authz -> authz
+                // Swagger документация
+                .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/api-docs/**", "/v3/api-docs/**").permitAll()
                 // Разрешаем все запросы для Hotel Service
                 // В реальной системе здесь должна быть проверка JWT токенов
                 .anyRequest().permitAll()

@@ -59,6 +59,14 @@ jwt:
   secret: mySecretKey
   expiration: 86400000 # 24 часа в миллисекундах
 
+# SpringDoc OpenAPI (Swagger) конфигурация
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true
+
 # Логирование
 logging:
   level:

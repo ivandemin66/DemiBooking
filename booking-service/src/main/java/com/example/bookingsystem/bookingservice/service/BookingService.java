@@ -38,8 +38,8 @@ public class BookingService {
      */
     @Transactional
     public BookingDto createBooking(CreateBookingRequest request, User user) {
-        log.info("Создание бронирования для пользователя {} на номер {} с {} по {}", 
-                user.getUsername(), request.getRoomId(), request.getStartDate(), request.getEndDate());
+        log.info("Создание бронирования для пользователя {} с {} по {}, autoSelect={}", 
+                user.getUsername(), request.getStartDate(), request.getEndDate(), request.getAutoSelect());
         
         // Генерируем requestId для идемпотентности
         String requestId = request.getRequestId() != null ? request.getRequestId() : UUID.randomUUID().toString();
@@ -51,20 +51,46 @@ public class BookingService {
             return bookingMapper.toDto(existingBooking.get());
         }
         
+        // Автоподбор номера если включен
+        Long selectedRoomId = request.getRoomId();
+        Long hotelId = null;
+        
+        if (Boolean.TRUE.equals(request.getAutoSelect())) {
+            log.info("Автоподбор номера на основе алгоритма планирования занятости");
+            RoomDto selectedRoom = selectBestAvailableRoom(request);
+            if (selectedRoom == null) {
+                throw new RuntimeException("Нет доступных номеров для бронирования");
+            }
+            selectedRoomId = selectedRoom.getId();
+            hotelId = selectedRoom.getHotelId();
+            log.info("Автоматически выбран номер {} в отеле {} (times_booked={})", 
+                    selectedRoomId, hotelId, selectedRoom.getTimesBooked());
+        } else {
+            // При конкретном номере нужно получить hotelId из номера
+            // Для упрощения будем получать его при подтверждении доступности
+            if (selectedRoomId == null) {
+                throw new IllegalArgumentException("roomId обязателен при autoSelect=false");
+            }
+        }
+        
         // Создаем бронирование в статусе PENDING
         Booking booking = bookingMapper.toEntity(request);
         booking.setUser(user);
+        booking.setRoomId(selectedRoomId);
+        if (hotelId != null) {
+            booking.setHotelId(hotelId);
+        }
         booking.setRequestId(requestId);
         booking.setStatus(Booking.BookingStatus.PENDING);
         
         // Сохраняем в локальной транзакции
         Booking savedBooking = bookingRepository.save(booking);
-        log.info("Бронирование создано в статусе PENDING с ID: {}", savedBooking.getId());
+        log.info("Бронирование создано в статусе PENDING с ID: {}, номер: {}", savedBooking.getId(), selectedRoomId);
         
         try {
             // Шаг 1: Подтверждение доступности номера в Hotel Service
             RoomAvailabilityRequest availabilityRequest = RoomAvailabilityRequest.builder()
-                    .roomId(request.getRoomId())
+                    .roomId(selectedRoomId)
                     .startDate(request.getStartDate())
                     .endDate(request.getEndDate())
                     .requestId(requestId)
@@ -74,6 +100,10 @@ public class BookingService {
             
             if (response.isAvailable()) {
                 // Шаг 2: Подтверждение бронирования
+                // Обновляем hotelId если он был получен из ответа
+                if (savedBooking.getHotelId() == null && response.getHotelId() != null) {
+                    savedBooking.setHotelId(response.getHotelId());
+                }
                 savedBooking.setStatus(Booking.BookingStatus.CONFIRMED);
                 savedBooking = bookingRepository.save(savedBooking);
                 log.info("Бронирование {} успешно подтверждено", savedBooking.getId());
@@ -93,6 +123,47 @@ public class BookingService {
             log.error("Ошибка при создании бронирования {}: {}", savedBooking.getId(), e.getMessage());
             performCompensation(savedBooking, requestId);
             throw new RuntimeException("Ошибка при создании бронирования: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Автоматический подбор номера на основе алгоритма планирования занятости
+     * Выбирает номер с минимальным times_booked из доступных
+     */
+    private RoomDto selectBestAvailableRoom(CreateBookingRequest request) {
+        log.debug("Автоподбор номера для периода {} - {}", request.getStartDate(), request.getEndDate());
+        
+        try {
+            // Получаем все доступные номера (уже отсортированные по times_booked)
+            List<RoomDto> availableRooms = hotelServiceClient.getAllAvailableRooms();
+            
+            if (availableRooms.isEmpty()) {
+                log.warn("Нет доступных номеров для автоподбора");
+                return null;
+            }
+            
+            // Фильтруем по вместимости если указана
+            if (request.getGuestCount() != null) {
+                availableRooms = availableRooms.stream()
+                        .filter(room -> room.getCapacity() >= request.getGuestCount())
+                        .toList();
+            }
+            
+            if (availableRooms.isEmpty()) {
+                log.warn("Нет доступных номеров с вместимостью >= {}", request.getGuestCount());
+                return null;
+            }
+            
+            // Выбираем первый номер (они уже отсортированы по times_booked ASC, id ASC)
+            RoomDto selectedRoom = availableRooms.get(0);
+            log.info("Выбран номер {} (times_booked={}, capacity={})", 
+                    selectedRoom.getId(), selectedRoom.getTimesBooked(), selectedRoom.getCapacity());
+            
+            return selectedRoom;
+            
+        } catch (Exception e) {
+            log.error("Ошибка при автоподборе номера: {}", e.getMessage());
+            throw new RuntimeException("Ошибка при автоподборе номера: " + e.getMessage(), e);
         }
     }
 

@@ -24,7 +24,7 @@ import java.util.List;
  * REST контроллер для управления бронированиями
  */
 @RestController
-@RequestMapping("/api/bookings")
+@RequestMapping("/booking")
 @RequiredArgsConstructor
 @Slf4j
 public class BookingController {

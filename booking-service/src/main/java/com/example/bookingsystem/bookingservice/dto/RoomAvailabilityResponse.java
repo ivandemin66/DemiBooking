@@ -18,4 +18,5 @@ public class RoomAvailabilityResponse {
     private String message;
     private String requestId;
     private Long roomId;
+    private Long hotelId;
 }
